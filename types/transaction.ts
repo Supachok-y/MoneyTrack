@@ -6,6 +6,7 @@ export interface Transaction {
   type: 'INCOME' | 'EXPENSE';
   bank: string;
   rawMessage: string;
+  isSuspicious: boolean ;
 }
 
 export interface DailyStats {

@@ -4,16 +4,26 @@ import { Transaction, DailyStats } from '../types/transaction';
 interface TransactionState {
   transactions: Transaction[];
   selectedDate: string;
-  // Actions
+  expandedId: string | null; // เพิ่ม: สำหรับเก็บ ID รายการที่ถูกเปิดอยู่
   addTransaction: (data: Transaction) => void;
   setSelectedDate: (date: string) => void;
-  // Selectors (ช่วยดึงข้อมูลตามเงื่อนไขข้อ 1-4)
+  toggleExpand: (id: string) => void; // เพิ่ม: ฟังก์ชันสำหรับกดเปิด/ปิด
   getStatsByDate: () => DailyStats;
 }
 
+// ฟังก์ชันสำหรับสร้างวันที่ปัจจุบันในฟอร์แมต DD/MM/YY (ปีไทย)
+const getTodayThaiDate = () => {
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const y = String(now.getFullYear() + 543).slice(-2);
+  return `${d}/${m}/${y}`;
+};
+
 export const useTransactionStore = create<TransactionState>((set, get) => ({
   transactions: [],
-  selectedDate: '24/04/69', // วันที่เริ่มต้นทดสอบ
+  selectedDate: getTodayThaiDate(),
+  expandedId: null, // เริ่มต้นไม่มีการเปิด
 
   addTransaction: (data) => {
     // ป้องกันการเพิ่มข้อมูลซ้ำจากข้อความเดิม
@@ -26,6 +36,10 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   },
 
   setSelectedDate: (date) => set({ selectedDate: date }),
+
+  toggleExpand: (id) => set((state) => ({
+    expandedId: state.expandedId === id ? null : id 
+  })),
 
   getStatsByDate: () => {
     const { transactions, selectedDate } = get();

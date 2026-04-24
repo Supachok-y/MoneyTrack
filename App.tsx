@@ -17,7 +17,6 @@ import { Transaction } from './types/transaction';
 const { SMSModule } = NativeModules;
 
 const App = () => {
-  
   const addTransaction = useTransactionStore((state) => state.addTransaction);
 
   /**
