@@ -1,80 +1,84 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  Button,
-  StyleSheet,
-  PermissionsAndroid,
-  Alert,
-  NativeModules,
+import React, { useEffect } from 'react';
+import { 
+  NativeModules, 
+  PermissionsAndroid, 
+  Platform, 
+  Alert, 
+  StyleSheet, 
+  SafeAreaView, 
+  StatusBar 
 } from 'react-native';
+import SummaryScreen from './Screens/SummaryScreen'; // หน้าจอ UI หลัก
+import { useTransactionStore } from './store/useTransactionStore';
+import { parseSMS } from './utils/smsParser';
+import { Transaction } from './types/transaction';
 
-// เรียกใช้ Module ที่เราเขียนเอง
+// ดึง Module ที่เราแก้ Java ให้ดึงแบบ getAllSMS มาแล้ว
 const { SMSModule } = NativeModules;
 
 const App = () => {
-  const [latestSms, setLatestSms] = useState('ยังไม่ได้กดดึงข้อมูล');
+  const addTransaction = useTransactionStore((state) => state.addTransaction);
 
-  const requestSmsPermission = async () => {
+  /**
+   * ฟังก์ชันดึง SMS ทั้งหมดและนำมาคัดกรอง
+   */
+  const fetchAndProcessSMS = async () => {
     try {
-      // ขั้นตอนสำคัญ: ต้องขออนุญาตก่อน ไม่งั้น Java จะพัง
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_SMS
-      );
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_SMS
+        );
 
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        // เรียกใช้ฟังก์ชันที่เราเขียนใน Java
-        const message = await SMSModule.getLatestSMS();
-        setLatestSms(message);
-      } else {
-        Alert.alert('Permission Denied', 'คุณต้องอนุญาตให้แอปอ่าน SMS ก่อนครับ');
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          // 1. ดึงข้อความทั้งหมด (ที่ใช้ [END_MSG] เป็นตัวคั่น)
+          const rawData: string = await SMSModule.getAllSMS();
+          
+          if (rawData) {
+            // 2. หั่นข้อความเป็น Array
+            const messageArray: string[] = rawData.split("[END_MSG]");
+
+            // 3. วนลูปเพื่อจัดการทีละข้อความ
+            messageArray.forEach((fullMsg: string) => {
+              if (fullMsg.trim() !== "") {
+                const cleanData: Transaction | null = parseSMS(fullMsg);
+                
+                // 4. ถ้าผ่านด่าน KBank และเป็นธุรกรรม ให้เก็บลง Store
+                if (cleanData) {
+                  addTransaction(cleanData);
+                }
+              }
+            });
+          }
+        } else {
+          Alert.alert(
+            "คำเตือน", 
+            "คุณแม่ต้องกด 'อนุญาต' เพื่อให้แอปอ่านยอดเงินจาก SMS ได้นะครับ"
+          );
+        }
       }
-    } catch (err: any) {
-      Alert.alert('Error', err.message);
+    } catch (err) {
+      console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", err);
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>MoneyTrack SMS Test</Text>
-      
-      <View style={styles.smsBox}>
-        <Text style={styles.smsText}>{latestSms}</Text>
-      </View>
+  // รันครั้งแรกเมื่อเปิดแอป
+  useEffect(() => {
+    fetchAndProcessSMS();
+  }, []);
 
-      <Button title="กดเพื่อดึง SMS ล่าสุด" onPress={requestSmsPermission} />
-    </View>
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      {/* แสดงหน้าจอหลักที่คุณสร้างไว้ */}
+      <SummaryScreen />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#333',
-  },
-  smsBox: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    marginBottom: 20,
-    minHeight: 100,
-    justifyContent: 'center',
-  },
-  smsText: {
-    fontSize: 16,
-    color: '#444',
-    textAlign: 'center',
+    backgroundColor: '#F5F5F5', // พื้นหลังสีเทาอ่อน สบายตาคุณแม่
   },
 });
 
