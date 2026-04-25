@@ -55,14 +55,14 @@ if (isDangerous(message)) {
   const timeMatch = message.match(/(\d{2}:\d{2})/);
   
   // ยอดเงิน: ต้องอยู่ระหว่างตัวคั่นที่แน่นอนของธนาคาร 
-  // เช่น "...จำนวน [ยอดเงิน] บาท..." หรือ "...[ยอดเงิน] คงเหลือ..."
   // ป้องกันมิจฉาชีพสุ่มตัวเลขมาหลอกระบบ
-  const amountMatch = message.match(/([\d,]+\.\d{2})\s+บาท|([\d,]+\.\d{2})\s+คงเหลือ/);
+  // ปรับ Regex ให้ดักจับตัวเลขที่มีคอมม่าและทศนิยมได้ดีขึ้น
+  const amountMatch = message.match(/([\d,]+\.\d{2})/); // ดึงตัวเลขก้อนแรกที่เจอที่มีทศนิยม .xx
 
   if (!dateMatch || !timeMatch || !amountMatch) return null;
 
   // เลือกค่าจากกลุ่มที่ Match ได้ (ป้องกันค่า null จาก Alternative Group ใน Regex)
-  const finalAmount = amountMatch[1] || amountMatch[2];
+  const finalAmount = amountMatch[1];
 
   return {
     id: `sms-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,

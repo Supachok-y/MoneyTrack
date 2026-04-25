@@ -82,8 +82,8 @@ android {
         applicationId "com.moneytrack"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.1"
+        versionCode 3
+        versionName "1.1.1-REFRESH-TEST"
     }
 
     signingConfigs {
@@ -102,18 +102,19 @@ android {
         }
     }
 
-    buildTypes {
-        debug {
-            signingConfig signingConfigs.debug
-        }
-        release {
-            // ใช้ signingConfig ของ release ที่เราเพิ่งสร้าง
-            signingConfig signingConfigs.release
-            
-            minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-        }
+buildTypes {
+    debug {
+        signingConfig signingConfigs.debug
+        debuggable true                    // ✅ เพิ่มบรรทัดนี้
+        minifyEnabled false                // ✅ เพิ่มบรรทัดนี้
     }
+    release {
+        signingConfig signingConfigs.release
+        debuggable false
+        minifyEnabled enableProguardInReleaseBuilds
+        proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+    }
+}
 }
 
 dependencies {

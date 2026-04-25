@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect , useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager , AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTransactionStore } from '../store/useTransactionStore';
@@ -11,8 +11,25 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const SummaryScreen = () => {
   // ดึง expandedId และ toggleExpand มาจาก Store
-  const { selectedDate, setSelectedDate, getStatsByDate, expandedId, toggleExpand } = useTransactionStore();
-  const { list, totalIncome, totalExpense, countIncome, countExpense } = getStatsByDate();
+  const { selectedDate, setSelectedDate, getStatsByDate, expandedId, toggleExpand , transactions , refreshTrigger } = useTransactionStore();
+  // 1. ตรวจสอบว่ามี transactions อยู่ใน useMemo Dependency หรือยัง
+  const { list, totalIncome, totalExpense, countIncome, countExpense } = useMemo(
+  () => getStatsByDate(),
+  [selectedDate, transactions, refreshTrigger] // ถูกต้องแล้ว: เมื่อ transactions เปลี่ยน list จะเปลี่ยนตาม
+);
+
+// 2. ปรับปรุง useEffect ให้ทำงานแน่นอน 100%
+useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        const today = getTodayThaiDate();
+        // เรียก setSelectedDate เพื่อสะกิด refreshTrigger
+        setSelectedDate(today); 
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      }
+    });
+    return () => subscription.remove();
+  }, []);
 
   const getTodayThaiDate = () => {
   const now = new Date();
@@ -21,20 +38,6 @@ const SummaryScreen = () => {
   const y = String(now.getFullYear() + 543).slice(-2);
   return `${d}/${m}/${y}`;
 };
-
-  useEffect(() => {
-  const subscription = AppState.addEventListener('change', nextAppState => {
-    // เมื่อแอปกลับมาอยู่ที่หน้าจอ (active)
-    if (nextAppState === 'active') {
-      const today = getTodayThaiDate(); // ฟังก์ชันที่เราสร้างไว้
-      if (selectedDate !== today) {
-        setSelectedDate(today); // อัปเดตวันที่ให้เป็นปัจจุบันทันที
-      }
-    }
-  });
-
-  return () => subscription.remove();
-}, [selectedDate]);
 
   const changeDate = (offset: number) => {
     const [d, m, y] = selectedDate.split('/').map(Number);
@@ -62,7 +65,7 @@ const SummaryScreen = () => {
     return (
       <View style={[
         styles.card, 
-        { backgroundColor: isIncome ? '#F0FFF4' : '#FFF5F5' } 
+        { backgroundColor: isIncome ? '#F0FFF4' : '#FFF5F5' , borderColor: isIncome ? '#81C784' : '#EF9A9A' } 
       ]}>
         {/* ใช้ TouchableOpacity ครอบเพื่อให้กดได้ทั้งการ์ด */}
         <TouchableOpacity onPress={() => handlePress(item.id)} activeOpacity={0.7}>
@@ -105,11 +108,11 @@ const SummaryScreen = () => {
       </View>
 
       <View style={styles.summaryContainer}>
-        <View style={[styles.summaryBox, { backgroundColor: '#E8F5E9' }]}>
+        <View style={[styles.summaryBox, { backgroundColor: '#E8F5E9' , borderColor: '#2E7D32'   }]}>
           <Text style={[styles.summaryLabel, { color: '#2E7D32' }]}>เข้า ({countIncome} รอบ)</Text>
           <Text style={[styles.summaryValue, { color: '#2E7D32' }]}>+{totalIncome.toLocaleString()}</Text>
         </View>
-        <View style={[styles.summaryBox, { backgroundColor: '#FFEBEE' }]}>
+        <View style={[styles.summaryBox, { backgroundColor: '#FFEBEE' , borderColor: '#C62828' }]}>
           <Text style={[styles.summaryLabel, { color: '#D32F2F' }]}>ออก ({countExpense} รอบ)</Text>
           <Text style={[styles.summaryValue, { color: '#D32F2F' }]}>-{totalExpense.toLocaleString()}</Text>
         </View>
@@ -126,36 +129,116 @@ const SummaryScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
-  datePickerContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    backgroundColor: '#FFF', 
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    elevation: 4
+  container: { 
+    flex: 1, 
+    backgroundColor: '#E0E0E0'  // ขาวสะอาด ไม่เทา
   },
-  dateBtn: { backgroundColor: '#007AFF', padding: 15, borderRadius: 10, width: 60, alignItems: 'center' },
-  dateBtnText: { color: '#FFF', fontSize: 30, fontWeight: 'bold' },
+  datePickerContainer: { 
+  flexDirection: 'row', 
+  alignItems: 'center', 
+  justifyContent: 'space-between', 
+  backgroundColor: '#1565C0',
+  paddingVertical: 20,
+  paddingHorizontal: 16,
+  elevation: 6
+  },
+  dateBtn: {
+    backgroundColor: 'rgba(255,255,255,0.25)', // กระจกใสบนน้ำเงิน 
+    borderRadius: 28,        // ✅ กลมสมบูรณ์
+    padding: 16, 
+    width: 70,        // ปุ่มกว้างขึ้น 
+    height: 70,       // ปุ่มสูงขึ้น กดง่าย
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderColor: 'rgba(255,255,255,0.8)',  // ขอบขาวบางๆ
+    elevation: 2
+  },
+  dateBtnText: { 
+    color: '#FFFFFF',
+    fontSize: 28,      // ใหญ่ขึ้น
+    fontWeight: 'bold',
+    lineHeight: 32, 
+  },
   dateDisplay: { alignItems: 'center' },
-  textLabel: { fontSize: 18, color: '#666' },
-  textDate: { fontSize: 32, fontWeight: 'bold', color: '#000' },
-  summaryContainer: { flexDirection: 'row', padding: 10 },
-  summaryBox: { flex: 1, margin: 5, padding: 15, borderRadius: 12, alignItems: 'center' },
-  summaryLabel: { fontSize: 18, fontWeight: 'bold' },
-  summaryValue: { fontSize: 26, fontWeight: 'bold' },
-  card: { borderRadius: 15, marginHorizontal: 15, marginVertical: 5, padding: 20, elevation: 1 },
-  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  textTime: { fontSize: 22, color: '#757575' },
-  textAmount: { fontSize: 28, fontWeight: 'bold' },
-  emptyText: { textAlign: 'center', marginTop: 100, fontSize: 24, color: '#999' },
-  
-  // Style เพิ่มเติมสำหรับส่วนรายละเอียด
+  textLabel: { 
+    fontSize: 20,      // ใหญ่ขึ้น
+    color: '#FFFFFF',  // ขาว ตัดกับพื้นน้ำเงิน
+    fontWeight: '600'
+  },
+  textDate: { 
+    fontSize: 42,      // ใหญ่มาก อ่านง่าย
+    fontWeight: 'bold', 
+    color: '#FFFFFF'   // ขาว
+  },
+  summaryContainer: { 
+    flexDirection: 'row', 
+    padding: 12,
+    backgroundColor: '#E0E0E0'
+  },
+  summaryBox: { 
+    flex: 1, 
+    margin: 6, 
+    padding: 18, 
+    borderRadius: 16, 
+    alignItems: 'center',
+    elevation: 3,
+    borderWidth: 2,    // มี border ชัดเจน
+  },
+  summaryLabel: { 
+    fontSize: 16,      // ใหญ่ขึ้น
+    fontWeight: 'bold',
+    marginBottom: 6
+  },
+  summaryValue: { 
+    fontSize: 34,      // ใหญ่มาก
+    fontWeight: 'bold' 
+  },
+  card: { 
+    borderRadius: 16, 
+    marginHorizontal: 12, 
+    marginVertical: 6, 
+    padding: 22, 
+    elevation: 4,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,  // มี border ช่วยให้เห็นขอบการ์ดชัด
+  },
+  cardRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center' 
+  },
+  textTime: { 
+    fontSize: 26,      // ใหญ่ขึ้น
+    color: '#424242',  // เทาเข้ม อ่านง่าย
+    fontWeight: '500'
+  },
+  textAmount: { 
+    fontSize: 34,      // ใหญ่มาก เห็นตัวเลขชัด
+    fontWeight: 'bold' 
+  },
+  emptyText: { 
+    textAlign: 'center', 
+    marginTop: 100, 
+    fontSize: 26, 
+    color: '#757575' 
+  },
   detailContainer: { marginTop: 15 },
-  divider: { height: 1, backgroundColor: 'rgba(0,0,0,0.05)', marginBottom: 10 },
-  textOriginalLabel: { fontSize: 14, color: '#888', marginBottom: 4 },
-  textRawMessage: { fontSize: 16, color: '#444', lineHeight: 22 }
+  divider: { 
+    height: 2,         // หนาขึ้น
+    backgroundColor: 'rgba(0,0,0,0.1)', 
+    marginBottom: 12 
+  },
+  textOriginalLabel: { 
+    fontSize: 18,      // ใหญ่ขึ้น
+    color: '#666', 
+    marginBottom: 6,
+    fontWeight: '600'
+  },
+  textRawMessage: { 
+    fontSize: 18,      // ใหญ่ขึ้น
+    color: '#333',     // เกือบดำ อ่านง่าย
+    lineHeight: 28     // ระยะบรรทัดกว้างขึ้น
+  }
 });
 
 export default SummaryScreen;

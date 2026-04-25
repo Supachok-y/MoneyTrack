@@ -5,11 +5,14 @@ interface TransactionState {
   transactions: Transaction[];
   selectedDate: string;
   expandedId: string | null; // เพิ่ม: สำหรับเก็บ ID รายการที่ถูกเปิดอยู่
+  refreshTrigger: number;
   addTransaction: (data: Transaction) => void;
   setSelectedDate: (date: string) => void;
   toggleExpand: (id: string) => void; // เพิ่ม: ฟังก์ชันสำหรับกดเปิด/ปิด
   getStatsByDate: () => DailyStats;
 }
+
+
 
 // ฟังก์ชันสำหรับสร้างวันที่ปัจจุบันในฟอร์แมต DD/MM/YY (ปีไทย)
 const getTodayThaiDate = () => {
@@ -24,18 +27,22 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   transactions: [],
   selectedDate: getTodayThaiDate(),
   expandedId: null, // เริ่มต้นไม่มีการเปิด
+  refreshTrigger: 0,
 
-  addTransaction: (data) => {
-    // ป้องกันการเพิ่มข้อมูลซ้ำจากข้อความเดิม
-    const isDuplicate = get().transactions.some(t => t.rawMessage === data.rawMessage);
-    if (!isDuplicate) {
-      set((state) => ({
-        transactions: [data, ...state.transactions],
-      }));
-    }
-  },
+addTransaction: (data) => {
+  const isDuplicate = get().transactions.some(t => t.rawMessage === data.rawMessage);
+  if (!isDuplicate) {
+    set((state) => ({
+      transactions: [data, ...state.transactions],
+      refreshTrigger: state.refreshTrigger + 1 // ทุกครั้งที่เพิ่ม ให้เพิ่มเลขเวอร์ชัน
+    }));
+  }
+},
 
-  setSelectedDate: (date) => set({ selectedDate: date }),
+  setSelectedDate: (date) => set((state) => ({ 
+    selectedDate: date,
+    refreshTrigger: state.refreshTrigger + 1 // ทุกครั้งที่เปลี่ยนวันที่ ให้สะกิด UI ด้วย
+  })),
 
   toggleExpand: (id) => set((state) => ({
     expandedId: state.expandedId === id ? null : id 
@@ -46,6 +53,8 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     
     // ข้อ 3: กรองรายการเฉพาะวันที่เลือก
     const filteredList = transactions.filter((t) => t.date === selectedDate);
+
+    console.log('Comparing:', selectedDate, 'with transactions');
     
     const incomeList = filteredList.filter((t) => t.type === 'INCOME');
     const expenseList = filteredList.filter((t) => t.type === 'EXPENSE');
