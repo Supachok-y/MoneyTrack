@@ -131,7 +131,7 @@ useEffect(() => {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#E0E0E0'  // ขาวสะอาด ไม่เทา
+    backgroundColor: '#E0E0E0'
   },
   datePickerContainer: { 
   flexDirection: 'row', 
@@ -143,32 +143,32 @@ const styles = StyleSheet.create({
   elevation: 6
   },
   dateBtn: {
-    backgroundColor: 'rgba(255,255,255,0.25)', // กระจกใสบนน้ำเงิน 
-    borderRadius: 28,        // ✅ กลมสมบูรณ์
+    backgroundColor: 'rgba(255,255,255,0.25)', 
+    borderRadius: 28,       
     padding: 16, 
-    width: 70,        // ปุ่มกว้างขึ้น 
-    height: 70,       // ปุ่มสูงขึ้น กดง่าย
+    width: 70,        
+    height: 70,       
     alignItems: 'center',
     justifyContent: 'center',
-    borderColor: 'rgba(255,255,255,0.8)',  // ขอบขาวบางๆ
+    borderColor: 'rgba(255,255,255,0.8)', 
     elevation: 2
   },
   dateBtnText: { 
     color: '#FFFFFF',
-    fontSize: 28,      // ใหญ่ขึ้น
+    fontSize: 28,      
     fontWeight: 'bold',
     lineHeight: 32, 
   },
   dateDisplay: { alignItems: 'center' },
   textLabel: { 
-    fontSize: 20,      // ใหญ่ขึ้น
-    color: '#FFFFFF',  // ขาว ตัดกับพื้นน้ำเงิน
+    fontSize: 15,     
+    color: '#FFFFFF', 
     fontWeight: '600'
   },
   textDate: { 
-    fontSize: 42,      // ใหญ่มาก อ่านง่าย
+    fontSize: 15,      
     fontWeight: 'bold', 
-    color: '#FFFFFF'   // ขาว
+    color: '#FFFFFF'   
   },
   summaryContainer: { 
     flexDirection: 'row', 
@@ -178,20 +178,24 @@ const styles = StyleSheet.create({
   summaryBox: { 
     flex: 1, 
     margin: 6, 
-    padding: 18, 
+    padding: 14, 
     borderRadius: 16, 
     alignItems: 'center',
     elevation: 3,
-    borderWidth: 2,    // มี border ชัดเจน
+    overflow: 'hidden', 
+    borderWidth: 2,    
   },
   summaryLabel: { 
-    fontSize: 16,      // ใหญ่ขึ้น
+    fontSize: 10,
     fontWeight: 'bold',
-    marginBottom: 6
+    marginBottom: 6,
+    flexWrap: 'wrap',     
+    textAlign: 'center'  
   },
   summaryValue: { 
-    fontSize: 34,      // ใหญ่มาก
-    fontWeight: 'bold' 
+    fontSize: 25,        
+    fontWeight: 'bold',
+    textAlign: 'center' 
   },
   card: { 
     borderRadius: 16, 
@@ -200,7 +204,7 @@ const styles = StyleSheet.create({
     padding: 22, 
     elevation: 4,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,  // มี border ช่วยให้เห็นขอบการ์ดชัด
+    borderWidth: 1.5,  
   },
   cardRow: { 
     flexDirection: 'row', 
@@ -208,12 +212,12 @@ const styles = StyleSheet.create({
     alignItems: 'center' 
   },
   textTime: { 
-    fontSize: 26,      // ใหญ่ขึ้น
-    color: '#424242',  // เทาเข้ม อ่านง่าย
+    fontSize: 26,      
+    color: '#424242',  
     fontWeight: '500'
   },
   textAmount: { 
-    fontSize: 34,      // ใหญ่มาก เห็นตัวเลขชัด
+    fontSize: 34,     
     fontWeight: 'bold' 
   },
   emptyText: { 
@@ -224,20 +228,20 @@ const styles = StyleSheet.create({
   },
   detailContainer: { marginTop: 15 },
   divider: { 
-    height: 2,         // หนาขึ้น
+    height: 2,        
     backgroundColor: 'rgba(0,0,0,0.1)', 
     marginBottom: 12 
   },
   textOriginalLabel: { 
-    fontSize: 18,      // ใหญ่ขึ้น
+    fontSize: 18,     
     color: '#666', 
     marginBottom: 6,
     fontWeight: '600'
   },
   textRawMessage: { 
-    fontSize: 18,      // ใหญ่ขึ้น
-    color: '#333',     // เกือบดำ อ่านง่าย
-    lineHeight: 28     // ระยะบรรทัดกว้างขึ้น
+    fontSize: 18,   
+    color: '#333',   
+    lineHeight: 28     
   }
 });
 
